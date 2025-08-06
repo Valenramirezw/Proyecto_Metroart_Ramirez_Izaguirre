@@ -82,10 +82,10 @@ class Museum:
         selected_paintings = []
         painting_ids = requests.get(f'https://collectionapi.metmuseum.org/public/collection/v1/objects?departmentIds={selected_dpto.department_id}').json()['objectIDs']
         
-        start = 1
+        start = 0
 
         while start < len(painting_ids):
-            for painting_id in painting_ids[start:start+20]:
+            for painting_id in painting_ids[start:start+10]:
                 painting,boolean = self.get_object_id(painting_id)
                 if painting == None:
                     continue
@@ -97,7 +97,7 @@ class Museum:
                     self.paintings.append(painting)
                 
                 selected_paintings.append(painting)
-            start += 20
+            start += 10
 
             if start >= len(painting_ids):
                 print('Fin de los resultados')
@@ -106,7 +106,7 @@ class Museum:
             print(f'# de Obras Obtenidas: {len(selected_paintings)}\n¿Te gustaría obtener mas obras?')
             op = input('Si (s)/No (cualquier tecla): ')
             
-            if op != 'si':
+            if op != 's':
                 break
 
         
