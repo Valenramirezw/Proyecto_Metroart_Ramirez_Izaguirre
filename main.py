@@ -1,3 +1,5 @@
 from Museum import Museum
 def main():
-    pass
+    museum = Museum()
+    museum.start()
+main()
