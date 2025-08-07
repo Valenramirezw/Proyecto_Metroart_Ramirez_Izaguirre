@@ -121,7 +121,71 @@ class Museum:
 
 
     def search_painting_nationality(self):
-        pass
+         nationalities = []
+         with open('nationalities.csv', encoding='utf-8') as f:
+            lector = csv.DictReader(f)
+            for fila in lector:
+                nationalities.append(fila['Nationality'])
+
+         for i, nationality in enumerate(nationalities):
+            print(f'{i+1}) {nationality.capitalize()}')
+
+         opcion = input('Ingrese el número de la opción: ')
+         while not opcion.isnumeric() or int(opcion) not in range(1,len(nationalities)+1):
+            print('Su opción no ha sido válida...Vuelve a intentarlo...')
+            opcion = input('Ingrese el número de la opción: ')
+
+
+         selected_nationality = nationalities[int(opcion)-1]
+         print(f'NACIONALIDAD SELECCIONADA: {selected_nationality.upper()}')
+         selected_paintings = []
+         painting_ids = requests.get(f'https://collectionapi.metmuseum.org/public/collection/v1/search?artistOrCulture=true&q={selected_nationality}').json()['objectIDs']
+        
+         start = 0
+
+         while start < len(painting_ids):
+            for painting_id in painting_ids[start:start+10]:
+                painting, boolean = self.get_object_id(painting_id)
+
+                if painting == None:
+                    continue
+
+                if not painting:
+                    print('No se puede continuar accediendo a la API')
+                    break
+
+                
+
+                if selected_nationality.lower() in painting.painting_artist.artist_nationality.lower():
+                    selected_paintings.append(painting)
+                    print(f'\t\tObra {painting_id} seleccionada.')
+
+                    if not boolean:
+                        self.paintings.append(painting)
+                else:
+                    print(f'\t\tObra {painting_id} descartada. La NACIONALIDAD DEL ARTISTA no coincide con la seleccionada')
+
+            start += 10
+
+            if start >= len(painting_ids):
+                print('Fin de los resultados')
+                break
+            
+            print(f'# de Obras Obtenidas: {len(selected_paintings)}\n¿Te gustaría obtener mas obras?')
+            op = input('Si (s)/No (cualquier tecla): ')
+            
+            if op != 's':
+                break
+
+        
+         if len(selected_paintings) == 0:
+            print(f'\n--- SE HAN ENCONTRADO {len(selected_paintings)} OBRAS EN LA OPCIÓN SELECCIONADA')
+         else:
+            print(f'\n--- SE HAN ENCONTRADO {len(selected_paintings)} OBRAS EN LA OPCIÓN SELECCIONADA')
+            for painting in selected_paintings:
+                print(painting.show_attr())
+            
+            print('- Para ver los detalles de alguna obra obtenida, dirígase al MENÚ PRINCIPAL')
 
     def search_painting_name(self):
         pass
