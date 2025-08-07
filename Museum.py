@@ -188,7 +188,54 @@ class Museum:
             print('- Para ver los detalles de alguna obra obtenida, dirígase al MENÚ PRINCIPAL')
 
     def search_painting_name(self):
-        pass
+        artist_name = input('Ingrese el NOMBRE DEL ARTISTA que desee buscar: ').lower()
+        print(f'CARACTERES DE BÚSQUEDA INGRESADOS: {artist_name.upper()}')
+
+        selected_paintings = []
+        painting_ids = requests.get(f'https://collectionapi.metmuseum.org/public/collection/v1/search?artistOrCulture=true&q={artist_name}').json()['objectIDs']
+        
+        start = 0
+
+        while start < len(painting_ids):
+            for painting_id in painting_ids[start:start+10]:
+                painting, boolean = self.get_object_id(painting_id)
+                if painting == None:
+                    continue
+
+                if not painting:
+                    print('No se puede continuar accediendo a la API')
+                    break
+
+
+                if artist_name.lower() in painting.painting_artist.artist_name.lower():
+                    selected_paintings.append(painting)
+                    print(f'\t\tObra {painting_id} seleccionada.')
+                    if not boolean:
+                        self.paintings.append(painting)
+                else:
+                    print(f'\t\tObra {painting_id} descartada. El NOMBRE DEL ARTISTA no coincide con la búsqueda ingresada')
+
+            start += 10
+
+            if start >= len(painting_ids):
+                print('Fin de los resultados')
+                break
+            
+            print(f'# de Obras Obtenidas: {len(selected_paintings)}\n¿Te gustaría obtener mas obras?')
+            op = input('Si (s)/No (cualquier tecla): ')
+            
+            if op != 's':
+                break
+
+        
+        if len(selected_paintings) == 0:
+            print(f'\n--- SE HAN ENCONTRADO {len(selected_paintings)} OBRAS EN LA OPCIÓN SELECCIONADA')
+        else:
+            print(f'\n--- SE HAN ENCONTRADO {len(selected_paintings)} OBRAS EN LA OPCIÓN SELECCIONADA')
+            for painting in selected_paintings:
+                print(painting.show_attr())
+            
+            print('- Para ver los detalles de alguna obra obtenida, dirígase al MENÚ PRINCIPAL')
 
 
     def show_details(self):
