@@ -6,8 +6,9 @@ class Artist:
         self.artist_death = artist_death
 
     def show_attr(self):
-        return f'''Artista: {self.artist_name}
-Nacionalidad: {self.artist_nationality}
-Fecha de Nacimiento: {self.artist_birth} - Fecha de Muerte: {self.artist_death}
+        return f'''\tArtista: {self.artist_name}
+\tNacionalidad: {self.artist_nationality}
+\tFecha de Nacimiento: {self.artist_birth} 
+\tFecha de Muerte: {self.artist_death}
 '''
     

@@ -33,7 +33,6 @@ class Museum:
         
         print('- Datos Cargados..')
 
-
     def get_object_id(self,painting_id):
         for painting in self.paintings:
             if painting.painting_id == painting_id:
@@ -43,7 +42,7 @@ class Museum:
             painting_api = requests.get(f'https://collectionapi.metmuseum.org/public/collection/v1/objects/{painting_id}').json()
         except:
             print('No se ha podido acceder a la API correctamente...')
-            return
+            return None, False
         
         print(f'\tObjecto {painting_id} obtenido de la API')
 
@@ -109,7 +108,6 @@ class Museum:
             if op != 's':
                 break
 
-        
         if len(selected_paintings) == 0:
             print(f'\n--- SE HAN ENCONTRADO {len(selected_paintings)} OBRAS EN LA OPCIÓN SELECCIONADA')
         else:
@@ -140,6 +138,9 @@ class Museum:
          print(f'NACIONALIDAD SELECCIONADA: {selected_nationality.upper()}')
          selected_paintings = []
          painting_ids = requests.get(f'https://collectionapi.metmuseum.org/public/collection/v1/search?artistOrCulture=true&q={selected_nationality}').json()['objectIDs']
+         if not painting_ids:
+             print('No se han encontrado resultados...')
+             return
         
          start = 0
 
@@ -153,8 +154,6 @@ class Museum:
                 if not painting:
                     print('No se puede continuar accediendo a la API')
                     break
-
-                
 
                 if selected_nationality.lower() in painting.painting_artist.artist_nationality.lower():
                     selected_paintings.append(painting)
@@ -193,6 +192,9 @@ class Museum:
 
         selected_paintings = []
         painting_ids = requests.get(f'https://collectionapi.metmuseum.org/public/collection/v1/search?artistOrCulture=true&q={artist_name}').json()['objectIDs']
+        if not painting_ids == 0:
+             print('No se han encontrado resultados...')
+             return
         
         start = 0
 
@@ -227,7 +229,6 @@ class Museum:
             if op != 's':
                 break
 
-        
         if len(selected_paintings) == 0:
             print(f'\n--- SE HAN ENCONTRADO {len(selected_paintings)} OBRAS EN LA OPCIÓN SELECCIONADA')
         else:
@@ -237,13 +238,54 @@ class Museum:
             
             print('- Para ver los detalles de alguna obra obtenida, dirígase al MENÚ PRINCIPAL')
 
+    def show_details(self,selected_painting):
+        for i,painting in enumerate(selected_painting):
+            print(f'{i+1}) {painting.painting_title} (ID: {painting.painting_id})')
 
-    def show_details(self):
-        pass
+        opcion = input('Ingrese el número de la opción: ')
+        while not opcion.isnumeric() or int(opcion) not in range(1,len(selected_painting)+1):
+            print('Su opción no ha sido válida...Vuelve a intentarlo...')
+            opcion = input('Ingrese el número de la opción: ')
 
+        print('\n')
 
-    def show_image(self):
-        pass
+        print(selected_painting[int(opcion)-1].show_details())
+        if selected_painting[int(opcion)-1].painting_image:
+            print('¿Te gustaría ver la imagen de la obra?')
+            op = input('Si (s)/No (cualquier tecla): ')
+            if op.lower() == 's':
+                self.show_image(selected_painting[int(opcion)-1])
+
+    def show_image(self, painting):
+        url = painting.painting_image
+        nombre_base = "imagen_pintura"
+
+        try:
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
+
+            content_type = response.headers.get('Content-Type')
+            extension = '.png'  
+            if content_type:
+                if 'image/png' in content_type:
+                    extension = '.png'
+                elif 'image/jpeg' in content_type:
+                    extension = '.jpg'
+                elif 'image/svg+xml' in content_type:
+                    extension = '.svg'
+
+            nombre_archivo = f"{nombre_base}{extension}"
+
+            with open(nombre_archivo, 'wb') as file:
+                for chunk in response.iter_content(chunk_size=8192):
+                    file.write(chunk)
+
+            img = Image.open(nombre_archivo)
+            img.show()
+        except Exception as e:
+            print(f"Err: {e}")
+        except IOError as e:
+            print(f"Error al manejar el archivo: {e}")
 
     def start(self):
         self.load_data_departments()
