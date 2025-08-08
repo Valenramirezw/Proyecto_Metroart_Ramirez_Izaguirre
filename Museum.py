@@ -9,10 +9,17 @@ from PIL import Image
 
 class Museum:
     def __init__(self):
+        """
+        Inicializa una instancia del museo con listas vacías de pinturas y departamentos.
+        """   
         self.paintings = []
         self.departments = []
 
     def get_data_departments(self):
+        """Obtiene los datos de los departamentos desde la API del MET.
+        Returns:
+            list[dict]: Una lista de diccionarios con información de los departamentos si la solicitud es exitosa, de lo contrario None.
+        """
         try:
             departments_api = requests.get('https://collectionapi.metmuseum.org/public/collection/v1/departments').json()['departments']
             print('- Datos de departamentos obtenidos')
@@ -21,6 +28,10 @@ class Museum:
             print('- No se ha logrado obtener datos de la API')
 
     def load_data_departments(self):
+        """
+        Carga los datos de los departamentos en la instancia del museo.
+        Crea instancias de `Department` y las guarda en la lista `self.departments`.
+        """
         print('- Cargando Datos...')
         departments_api = self.get_data_departments()
 
@@ -34,6 +45,12 @@ class Museum:
         print('- Datos Cargados..')
 
     def get_object_id(self,painting_id):
+        """Busca una pintura por su ID, ya sea en la lista local o a través de la API.
+        Args:
+            painting_id (int): ID del objeto (pintura) que se desea buscar.
+        Returns:
+            'Painting' | None, Bool: objeto `Painting` (o None si no se encuentra) y un booleano indicando si ya estaba en la lista local.
+        """
         for painting in self.paintings:
             if painting.painting_id == painting_id:
                 print(f'\tObjecto {painting_id} encontrado en la lista de OBRAS')
@@ -63,6 +80,12 @@ class Museum:
             return None, True
 
     def search_painting_department(self):
+        """
+        Permite buscar pinturas según el departamento seleccionado.
+
+        Muestra la lista de departamentos disponibles, permite al usuario seleccionar uno y 
+        luego va trayendo obras en tandas de 10, preguntando si desea continuar o no.
+        """
         print('\nBÚSQUEDA POR DEPARTAMENTO')
 
         for i,dpto in enumerate(self.departments):
@@ -119,6 +142,13 @@ class Museum:
 
 
     def search_painting_nationality(self):
+         """
+        Permite buscar pinturas según la nacionalidad del artista.
+
+        Carga una lista de nacionalidades desde un archivo CSV, permite al usuario seleccionar una 
+        y obtiene las obras correspondientes en tandas de 10 filtrando que efectivamente la nacionalidad
+        del artista coincida con la seleccionada.
+        """
          nationalities = []
          with open('nationalities.csv', encoding='utf-8') as f:
             lector = csv.DictReader(f)
@@ -187,12 +217,18 @@ class Museum:
             print('- Para ver los detalles de alguna obra obtenida, dirígase al MENÚ PRINCIPAL')
 
     def search_painting_name(self):
+        """
+        Permite buscar pinturas ingresando el nombre del artista o una palabra clave.
+
+        Muestra obras que coinciden con la búsqueda, presentándolas en bloques de 10, 
+        y filtra aquellas que efectivamente coincidan por nombre.
+        """
         artist_name = input('Ingrese el NOMBRE DEL ARTISTA que desee buscar: ').lower()
         print(f'CARACTERES DE BÚSQUEDA INGRESADOS: {artist_name.upper()}')
 
         selected_paintings = []
         painting_ids = requests.get(f'https://collectionapi.metmuseum.org/public/collection/v1/search?artistOrCulture=true&q={artist_name}').json()['objectIDs']
-        if not painting_ids == 0:
+        if not painting_ids:
              print('No se han encontrado resultados...')
              return
         
@@ -239,6 +275,15 @@ class Museum:
             print('- Para ver los detalles de alguna obra obtenida, dirígase al MENÚ PRINCIPAL')
 
     def show_details(self,selected_painting):
+        """
+        Muestra los detalles de una pintura seleccionada.
+
+        Args:
+            selected_painting (list[Painting]): Lista de objetos `Painting` de donde el usuario puede elegir uno.
+
+        Permite al usuario visualizar información detallada de una obra e incluso mostrar su imagen
+        si lo desea y si se encuentra disponible.
+        """
         for i,painting in enumerate(selected_painting):
             print(f'{i+1}) {painting.painting_title} (ID: {painting.painting_id})')
 
@@ -257,6 +302,14 @@ class Museum:
                 self.show_image(selected_painting[int(opcion)-1])
 
     def show_image(self, painting):
+        """
+        Descarga y muestra la imagen asociada a una pintura.
+
+        Args:
+            painting (Painting): Objeto que contiene la URL de la imagen a mostrar.
+
+        Abre la imagen en una pestaña aparte.
+        """
         url = painting.painting_image
         nombre_base = "imagen_pintura"
 
@@ -288,6 +341,10 @@ class Museum:
             print(f"Error al manejar el archivo: {e}")
 
     def start(self):
+        """Inicia el programa del museo.
+
+        Carga los datos de los departamentos y presenta un menú para que el usuario explore.
+        """
         self.load_data_departments()
         
         if len(self.departments) == 0:
@@ -319,8 +376,11 @@ class Museum:
                 self.search_painting_name()
                 input('Presione ENTER para CONTINUAR ')
             elif opcion =='4':
-                self.show_details(self.paintings)
-                input('Presione ENTER para CONTINUAR ')
+                if len(self.paintings) == 0:
+                    print("No hay obras en el sistema para visualizar")
+                else:
+                    self.show_details(self.paintings)
+                    input('Presione ENTER para CONTINUAR ')
             else:
                 print('Su opción no ha sido válida... Vuelva a intentarlo...')
 
